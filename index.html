@@ -1,0 +1,149 @@
+<hmtl>
+    <head>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div id="root"></div>
+        <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+        <script src="https://unpkg.com/@pusher/chatkit"></script>
+        <script src="https://unpkg.com/babel-standalone@latest/babel.min.js"></script>
+        <script type="text/babel">
+            const testToken = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/ab80ba93-6191-4259-8321-157f63f57804/token"
+            const instanceLocator = "v1:us1:ab80ba93-6191-4259-8321-157f63f57804"
+            const roomId = 15379486
+            const username = '1'
+
+            const DUMMY_DATA = [
+                {
+                senderId: "perborgen",
+                text: "who'll win?"
+                },
+                {
+                senderId: "janedoe",
+                text: "who'll win?"
+                }
+            ]
+
+            className App extends React.Component {
+                constructor(){
+                    super();
+                    this.state = {
+                        messages: []
+                    }
+                    this.sendMessage = this.sendMessage.bind(this)
+                }
+
+                componentDidMount() {
+                    const chatManager = new Chatkit.ChatManager({
+                        instanceLocator: instanceLocator,
+                        userId: 'tamir',
+                        tokenProvider: new Chatkit.TokenProvider({
+                            url: testToken
+                        })
+                    })
+                    
+                    chatManager.connect()
+                        .then(currentUser => {
+                            this.currentUser = currentUser
+                            this.currentUser.subscribeToRoom({
+                            roomId: roomId,
+                            hooks: {
+                                onNewMessage: message => {
+
+                                    this.setState({
+                                        messages: [...this.state.messages, message]
+                                    })
+                                }
+                            }
+                        })
+                    })
+                }
+
+                sendMessage(text) {
+                    this.currentUser.sendMessage({
+                        text,
+                        roomId: roomId
+                    })
+                }
+
+                render(){
+                    return (
+                        <div classNameName="app">
+                            <Title/>
+                            <MessageList 
+                                roomId={this.state.roomId}
+                                messages={this.state.messages} />
+                            <SendMessageForm
+                                sendMessage={this.sendMessage} />
+                        </div>
+                    )
+                }
+                
+            }
+
+            className MessageList extends React.Component {
+                render() {
+                    return (
+                        <ul classNameName="message-list">                 
+                            {this.props.messages.map(message => {
+                                return (
+                                <li key={message.id} classNameName="message">
+                                <div>
+                                    {message.senderId}
+                                </div>
+                                <div>
+                                    {message.text}
+                                </div>
+                                </li>
+                            )
+                            })}
+                        </ul>
+                    )
+                }
+            }
+
+            className SendMessageForm extends React.Component {
+                constructor() {
+                    super()
+                    this.state = {
+                    message: ''
+                    }
+                    this.handleChange = this.handleChange.bind(this)
+                    this.handleSubmit = this.handleSubmit.bind(this)
+                }
+                handleChange(e) {
+                    this.setState({
+                    message: e.target.value
+                    })
+                }
+                handleSubmit(e) {
+                    e.preventDefault()
+                    this.props.sendMessage(this.state.message)
+                    this.setState({
+                    message: ''
+                    })
+                }
+                render() {
+                    return (
+                    <form
+                        onSubmit={this.handleSubmit}
+                        classNameName="send-message-form">
+                        <input
+                        onChange={this.handleChange}
+                        value={this.state.message}
+                        placeholder="Type your message and hit ENTER"
+                        type="text" />
+                    </form>
+                    )
+                }
+            }
+
+            function Title() {
+                return <p classNameName="title">My awesome chat app</p>
+            }
+
+            ReactDOM.render(<App />, document.getElementById('root'));
+        </script>
+    </body>
+</hmtl>
